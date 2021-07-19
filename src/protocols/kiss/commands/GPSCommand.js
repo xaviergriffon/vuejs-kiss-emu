@@ -11,8 +11,50 @@ export default class GPSCommand extends AbstractKissCommand {
     super(0x54);
   }
 
+  /**
+   * Built the request in bytes allowing to transmit the message.
+   * @param {DataView} dataView DataView to transmit in the query
+   * @returns {ArrayBuffer} the request to be transmitted
+   */
+  buildRequest(dataView) {
+    const buffer = new ArrayBuffer(dataView.byteLength + 3);
+    const bytesBuffer = new DataView(buffer, 0);
+
+    let i = 0;
+    // command
+    bytesBuffer.setInt8(i, this.byteCommand);
+    i += 1;
+    // size
+    bytesBuffer.setInt8(i, dataView.byteLength);
+    i += 1;
+    // content
+    for (let t = 0; t < dataView.byteLength; t += 1) {
+      bytesBuffer.setInt8(i, dataView.getInt8(t));
+      i += 1;
+    }
+    // crc8
+    bytesBuffer.setInt8(i, AbstractKissCommand.computeCRC8(dataView));
+    i += 1;
+
+    return bytesBuffer;
+  }
+
   // eslint-disable-next-line class-methods-use-this, no-unused-vars
   buildBytesStream(protocol) {
-    return null;
+    const buffer = new ArrayBuffer(4 + 4 + 2 + 2 + 2 + 1);
+    const bytesBuffer = new DataView(buffer, 0);
+    console.log(`set lat ${protocol.coordinates[0]} long ${protocol.coordinates[1]} speed ${protocol.speed}`);
+    bytesBuffer.setInt32(0, protocol.coordinates[0] * 10000000);
+    bytesBuffer.setInt32(4, protocol.coordinates[1] * 10000000);
+    bytesBuffer.setInt16(8, protocol.speed * 100);
+    bytesBuffer.setInt16(10, protocol.groundCourse * 10);
+    bytesBuffer.setInt16(12, protocol.altitude);
+    /*
+     *     GPS_fix           = kissread_u8(KISS_INDEX_GPS_NUMSATFIX) >> 7;
+    GPS_numSat        = (kissread_u8(KISS_INDEX_GPS_NUMSATFIX)) & 0x7F;
+     */
+    bytesBuffer.setInt8(14, protocol.numSatFix);
+
+    return this.buildRequest(bytesBuffer);
   }
 }

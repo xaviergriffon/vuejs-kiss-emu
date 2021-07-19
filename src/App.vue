@@ -16,6 +16,9 @@ export default {
         <li class="nav-item">
           <router-link class="nav-link" to="/configuration">Configuration</router-link>
         </li>
+        <li class="nav-item">
+          <router-link class="nav-link" to="/map">Map</router-link>
+        </li>
       </ul>
       </nav>
     </header>

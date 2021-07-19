@@ -3,7 +3,7 @@ import GamepadUtil from '../shared/GamepadUtil';
 import Gimbal from '../components/Gimbal.vue';
 import RCSwitch from '../components/RCSwitch.vue';
 import SerialUsb from '../components/SerialUsb.vue';
-import Kiss from '../protocols/Kiss';
+import SwitchButton from '../components/SwitchButton.vue';
 
 /**
  * View showing the components for emulating the Kiss protocol
@@ -13,6 +13,7 @@ export default {
     Gimbal,
     RCSwitch,
     SerialUsb,
+    SwitchButton,
   },
   name: 'KissEmulator',
   data() {
@@ -22,7 +23,6 @@ export default {
       gamepadsLength: 0,
       gamepadConnected: false,
       gamepadId: '',
-      protocol: new Kiss(),
       boundRCObserver: null,
     };
   },
@@ -45,6 +45,9 @@ export default {
      */
     rcTransmitter() {
       return this.$store.getters['rcConfiguration/rcTransmitter'];
+    },
+    protocol() {
+      return this.$store.getters['rcConfiguration/protocol'];
     },
   },
   methods: {
@@ -105,6 +108,10 @@ export default {
     </div>
     <input v-model="message" placeholder="update-me">
     <button @click="sendMessage()">Send message</button>
+    <div>
+      Armed :
+      <SwitchButton :isEnabled="protocol.armed"/>
+    </div>
     <div>
       <div class='all-switch'>
     <Gimbal size=150 axeHorizontal='yaw'

@@ -2,6 +2,7 @@ import Vue from 'vue';
 import VueRouter from 'vue-router';
 import KissEmulator from '../views/KissEmulator.vue';
 import GamepadConfiguration from '../views/GamepadConfiguration.vue';
+import Map from '../components/Map.vue';
 
 Vue.use(VueRouter);
 
@@ -21,6 +22,11 @@ const routes = [
     path: '/configuration',
     name: 'Configuration',
     component: GamepadConfiguration,
+  },
+  {
+    path: '/map',
+    name: 'Map',
+    component: Map,
   },
 ];
 

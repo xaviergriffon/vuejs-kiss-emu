@@ -1,4 +1,5 @@
 import RCTransmitter from '../../shared/RCTransmitter';
+import Kiss from '../../protocols/Kiss';
 
 /**
  * Storage module of the radio control configuration.
@@ -8,6 +9,7 @@ export default {
   state: {
     rcTransmiter: null,
     gamepadId: null,
+    protocol: new Kiss(),
     observers: [],
   },
   mutations: {
@@ -40,6 +42,10 @@ export default {
       }
 
       return rcTransmiter;
+    },
+    protocol(state) {
+      const { protocol } = state;
+      return protocol;
     },
   },
   actions: {

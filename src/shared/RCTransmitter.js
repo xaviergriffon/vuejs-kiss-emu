@@ -180,7 +180,7 @@ export default class RCTransmitter {
       this.#resetValues();
     }
 
-    this.#notify();
+    this.notify();
     // The data is refreshed by the browser before next repaint
     window.requestAnimationFrame(this.#refreshValues.bind(this));
   }
@@ -256,9 +256,8 @@ export default class RCTransmitter {
   /**
    * Loops over this.observers and calls the update method on each observer.
    * The state object will call this method everytime it is updated.
-   * @private
    */
-  #notify() {
+  notify() {
     if (this.#observers.length > 0) {
       this.#observers.forEach((observer) => {
         if (typeof observer === 'function') {
