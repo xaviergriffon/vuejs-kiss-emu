@@ -3,7 +3,6 @@ import GamepadUtil from '../shared/GamepadUtil';
 import Gimbal from '../components/Gimbal.vue';
 import RCSwitch from '../components/RCSwitch.vue';
 import SerialUsb from '../components/SerialUsb.vue';
-import SwitchButton from '../components/SwitchButton.vue';
 
 /**
  * View showing the components for emulating the Kiss protocol
@@ -13,7 +12,6 @@ export default {
     Gimbal,
     RCSwitch,
     SerialUsb,
-    SwitchButton,
   },
   name: 'KissEmulator',
   data() {
@@ -110,7 +108,8 @@ export default {
     <button @click="sendMessage()">Send message</button>
     <div>
       Armed :
-      <SwitchButton :isEnabled="protocol.armed"/>
+      <ToggleButton :value="protocol.armed" color="#A3001B"
+        class="noPadding" />
     </div>
     <div>
       <div class='all-switch'>
@@ -123,7 +122,10 @@ export default {
   </div>
 </template>
 
-<style scoped>
+<style>
+  .noPadding div {
+    padding: unset;
+  }
   .aux {
     display: inline-flex;
   }
