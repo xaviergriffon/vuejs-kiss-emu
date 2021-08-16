@@ -15,7 +15,7 @@
       </template>
     </vl-geoloc>
     <vl-feature>
-      <vl-geom-point :coordinates="geolocCenter"></vl-geom-point>
+      <vl-geom-point :coordinates="geolocDrone" v-if="showDrone"></vl-geom-point>
     </vl-feature>
     <vl-layer-vector :z-index="1">
       <vl-source-vector :features.sync="features" ident="the-source"></vl-source-vector>
@@ -43,7 +43,7 @@
     Center: {{ center }}<br>
     Rotation: {{ rotation }}<br>
     My geolocation: {{ geolocPosition }}<br>
-    Distance: {{ distance }}
+    Distance: {{ distance }}m
   </div>
 </div>
 </template>
@@ -59,7 +59,8 @@ export default {
       features: [],
       rotation: 0,
       geolocPosition: undefined,
-      geolocCenter: [0, 0],
+      geolocDrone: [0, 0],
+      showDrone: false,
       interv: null,
       nInterv: 0,
     };
@@ -73,28 +74,15 @@ export default {
     },
     distance() {
       let distance = 0;
-      if (this.features.length > 0) {
-        const start = this.features[0].geometry.coordinates[0];
-        const end = this.features[0].geometry.coordinates[1];
-        // convertion des valeures du degree vers le radian
-        const latRad = start[0] * 0.017453293;
-        const lonRad = start[1] * 0.017453293;
-        const tlatRad = end[0] * 0.017453293;
-        const tlonRad = end[1] * 0.017453293;
-        /*
-        let midLat = tlatRad - latRad;
-        let midLon = tlonRad - lonRad;
-        */
-
-        // Calcule de la distance en Km
-        const latSin = Math.sin((latRad - tlatRad) / 2);
-        const lonSin = Math.sin((lonRad - tlonRad) / 2);
-
-        distance = 2 * Math.asin(Math.sqrt((latSin * latSin)
-          + Math.cos(latRad) * Math.cos(tlatRad) * (lonSin * lonSin)));
-        // pour la distance en Km il faut multiplier la valeure trouvée par le rayon de la terre
-        distance *= 6371;
-      }
+      this.features.forEach((feature) => {
+        const { geometry } = feature;
+        for (let coord = 1; coord < geometry.coordinates.length; coord += 1) {
+          const start = geometry.coordinates[coord - 1];
+          const end = geometry.coordinates[coord];
+          const dist = this.get_distance_m(start[1], start[0], end[1], end[0]);
+          distance += dist;
+        }
+      });
       return distance;
     },
   },
@@ -130,35 +118,52 @@ export default {
       const lat = pointA[1] + ((Math.abs((pointA[1] - pointB[1])) * percent) * latSens);
       return [long, lat];
     },
+    calcPercentSpeed(speedKMh, distance) {
+      // eslint-disable-next-line no-mixed-operators
+      const speedMsec = speedKMh * 1000 / 3600;
+      return speedMsec / distance;
+    },
     drawStart() {
       this.features = [];
       clearInterval(this.interv);
-      console.log('draw start');
+      this.showDrone = true;
     },
     drawEnd() {
       this.nInterv += 1;
-      const currInterv = this.nInterv;
-      console.log(this.features);
       const me = this;
-      const percentSpeed = 0.01;
+      const speedKMh = 80;
       let f = 0;
       let c = 1;
       let percent = 0;
+      let percentSpeed = 0;
+      let segmentChanged = true;
+      let time = 0;
+      let totDist = 0;
       me.interv = setInterval(() => {
+        time += 1;
         if (me.features.length <= 0) {
           return;
         }
         const { geometry } = me.features[f];
         const fPoint = geometry.coordinates[c - 1];
         const sPoint = geometry.coordinates[c];
-        me.geolocCenter = me.calcPosition(fPoint, sPoint, percent);
-        console.log(me.protocol);
-        me.protocol.coordinates = me.geolocCenter;
-        console.log(`${currInterv} Curr dist : ${me.get_distance_m(fPoint[0], fPoint[1], me.geolocCenter[0], me.geolocCenter[1])}`);
+        if (segmentChanged) {
+          const dist = this.get_distance_m(fPoint[1], fPoint[0], sPoint[1], sPoint[0]);
+          totDist += dist;
+          percentSpeed = this.calcPercentSpeed(speedKMh,
+            dist);
+          console.log(`percent speed ${percentSpeed} for ${dist}`);
+          segmentChanged = false;
+          if (c > 1 || f > 0) {
+            percent = percentSpeed;
+          }
+        }
+        me.geolocDrone = me.calcPosition(fPoint, sPoint, percent);
+        me.protocol.coordinates = me.geolocDrone;
         percent += percentSpeed;
         if (percent >= 1) {
           c += 1;
-          percent = percentSpeed;
+          segmentChanged = true;
         }
         if (c >= geometry.coordinates.length) {
           f += 1;
@@ -167,6 +172,8 @@ export default {
         }
         if (f >= this.features.length) {
           clearInterval(me.interv);
+          me.showDrone = false;
+          console.log(`tot dist ${totDist}m in ${time} sec`);
         }
       }, 1000);
     },
