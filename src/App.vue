@@ -1,7 +1,16 @@
 <script>
+import SerialUsb from './components/SerialUsb.vue';
 
 export default {
+  components: {
+    SerialUsb,
+  },
   name: 'App',
+  computed: {
+    protocol() {
+      return this.$store.getters['rcConfiguration/protocol'];
+    },
+  },
 };
 </script>
 
@@ -22,6 +31,9 @@ export default {
       </ul>
       </nav>
     </header>
+    <div class="protocol-container">
+      <SerialUsb :protocol="protocol"></SerialUsb>
+    </div>
     <div class="container">
       <main>
         <router-view/>
@@ -31,6 +43,8 @@ export default {
 </template>
 
 <style>
+@import "~vuelayers/dist/vuelayers.css";
+
 body {
   background: linear-gradient(to bottom, rgb(53, 53, 53), rgb(20, 20, 20));
   background-attachment: fixed;
@@ -71,6 +85,10 @@ div {
   display: flex;
   margin: 10px auto 0 auto;
   justify-content: center;
+}
+.protocol-container {
+  display: block;
+  background-color: white;
 }
 main {
   padding: 30px;

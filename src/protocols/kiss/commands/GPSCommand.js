@@ -41,20 +41,25 @@ export default class GPSCommand extends AbstractKissCommand {
 
   // eslint-disable-next-line class-methods-use-this, no-unused-vars
   buildBytesStream(protocol) {
-    const buffer = new ArrayBuffer(4 + 4 + 2 + 2 + 2 + 1);
-    const bytesBuffer = new DataView(buffer, 0);
-    console.log(`set lat ${protocol.coordinates[0]} long ${protocol.coordinates[1]} speed ${protocol.speed}`);
-    bytesBuffer.setInt32(0, protocol.coordinates[0] * 10000000);
-    bytesBuffer.setInt32(4, protocol.coordinates[1] * 10000000);
-    bytesBuffer.setInt16(8, protocol.speed * 100);
-    bytesBuffer.setInt16(10, protocol.groundCourse * 10);
-    bytesBuffer.setInt16(12, protocol.altitude);
-    /*
-     *     GPS_fix           = kissread_u8(KISS_INDEX_GPS_NUMSATFIX) >> 7;
-    GPS_numSat        = (kissread_u8(KISS_INDEX_GPS_NUMSATFIX)) & 0x7F;
-     */
-    bytesBuffer.setInt8(14, protocol.numSatFix);
+    const { gps } = protocol;
+    if (gps != null) {
+      const buffer = new ArrayBuffer(4 + 4 + 2 + 2 + 2 + 1);
+      const bytesBuffer = new DataView(buffer, 0);
+      // console.log(`set lat ${gps.coordinates[0]} long ${gps.coordinates[1]} speed ${gps.speed}`);
+      bytesBuffer.setInt32(0, gps.coordinates[0] * 10000000);
+      bytesBuffer.setInt32(4, gps.coordinates[1] * 10000000);
+      bytesBuffer.setInt16(8, gps.speed * 100);
+      bytesBuffer.setInt16(10, gps.groundCourse * 10);
+      bytesBuffer.setInt16(12, gps.altitude);
+      /*
+      *     GPS_fix           = kissread_u8(KISS_INDEX_GPS_NUMSATFIX) >> 7;
+      GPS_numSat        = (kissread_u8(KISS_INDEX_GPS_NUMSATFIX)) & 0x7F;
+      */
+      bytesBuffer.setInt8(14, gps.numSatFix);
 
-    return this.buildRequest(bytesBuffer);
+      return this.buildRequest(bytesBuffer);
+    }
+
+    return super.buildBytesStream(protocol);
   }
 }

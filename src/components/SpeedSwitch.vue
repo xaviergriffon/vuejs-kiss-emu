@@ -1,73 +1,63 @@
 <script>
-/**
- * Component for a radio control switch
- */
 export default {
-  name: 'RCSwitch',
+  name: 'SpeedSwitch',
   required: true,
   props: {
     size: { Type: Number },
-    switch: { Type: Number },
   },
   data() {
     return {
-      value: 0,
+      StereoPannerNode: 0,
+      speed: 0,
       svg: null,
       metters: null,
       paint: false,
       coord: { x: 0, y: 0 },
-      boundRCObserver: null,
     };
-  },
-  created() {
-    this.boundRCObserver = this.update.bind(this);
-    this.$store.dispatch('rcConfiguration/addObserver', this.boundRCObserver);
   },
   mounted() {
     this.svg = this.$refs.divSwitch;
     this.metters = this.$refs.meters;
+    this.speed = this.gps.speed;
     document.addEventListener('mousedown', this.startDrawing.bind(this));
     document.addEventListener('mouseup', this.stopDrawing.bind(this));
     document.addEventListener('mousemove', this.drawEvent.bind(this));
-  },
-  beforeDestroy() {
-    this.$store.dispatch('rcConfiguration/removeObserver', this.boundRCObserver);
+    const me = this;
+    // Listener to intercept the gps when it stops and the speed goes to 0.
+    this.gps.addObserver(() => {
+      if (me.paint === false && me.gps.speed === 0) {
+        me.draw(me.gps.speed);
+      }
+    });
   },
   computed: {
     /**
-     * @returns {RCTransmitter} emulated transmitter
+     * @returns {GPS} emulated GPS
      */
-    rcTransmitter() {
-      return this.$store.getters['rcConfiguration/rcTransmitter'];
+    gps() {
+      return this.$store.getters['rcConfiguration/gps'];
     },
     /**
      * @returns {string} the d path for svg component
      */
     dPath() {
-      return `M 0 ${this.size} L 0 0`;
+      return `M ${this.size} 0 L 0 0`;
     },
     /**
      * @returns {string} style for the meters
      */
     metersStyle() {
-      return `stroke-dasharray: ${this.size}; stroke-dashoffset: ${this.size};`;
+      const dashoffset = (this.gps.speed / 200) * this.size;
+      return `stroke-dasharray: ${this.size}; stroke-dashoffset: ${dashoffset};`;
     },
     /**
-     * @returns {number} width of stroke
+     * @returns {number} height of stroke
      */
-    strokeWidth() {
-      return this.size / 3;
+    strokeHeight() {
+      return 30;
     },
   },
   methods: {
-    /**
-     * receiving notification of a change in the transmitter or configuration
-     */
-    update() {
-      this.value = this.rcTransmitter.auxiliary(this.switch);
-      const valuePercent = (this.value - 1000) / 10;
-      this.draw(valuePercent);
-    },
     /**
      * draw the contents of the switch
      * @param {any} value value to be represented in percentage
@@ -78,7 +68,7 @@ export default {
         const length = this.metters.getTotalLength();
 
         // Calculate the percentage of the total length
-        const to = length * ((100 - value) / 100);
+        const to = length * (value / 100);
 
         // Trigger Layout in Safari hack https://jakearchibald.com/2013/animated-line-drawing-svg/
         this.metters.getBoundingClientRect();
@@ -105,9 +95,9 @@ export default {
      */
     is_it_in_the_switch() {
       return (this.coord.x >= 0
-        && this.coord.x < this.strokeWidth
+        && this.coord.x < this.size
         && this.coord.y >= 0
-        && this.coord.y <= this.size);
+        && this.coord.y <= this.strokeHeight);
     },
     /**
      * Start the drawing with mouse position
@@ -117,10 +107,7 @@ export default {
       this.getPosition(event);
       if (this.is_it_in_the_switch()) {
         this.paint = true;
-        // eslint-disable-next-line no-mixed-operators
-        const newValue = (this.size - this.coord.y) / this.size * 1000 + 1000;
-        this.rcTransmitter.auxiliaries[this.switch].rcValue = newValue;
-        this.rcTransmitter.notify();
+        this.drawEvent(event);
       }
     },
     /**
@@ -135,12 +122,17 @@ export default {
      */
     drawEvent(event) {
       if (this.paint) {
+        this.getPosition(event);
         if (this.is_it_in_the_switch()) {
         // eslint-disable-next-line no-mixed-operators
-          this.draw((this.size - this.coord.y) / this.size * 100);
-        }
+          this.draw((this.coord.x) / this.size * 100);
 
-        this.getPosition(event);
+          // Vitesse calculé sur 200 max
+          // eslint-disable-next-line no-mixed-operators
+          this.speed = (this.coord.x) / this.size * 200;
+          this.gps.speed = this.speed;
+          this.$emit('update:speed', this.speed);
+        }
       }
     },
   },
@@ -149,14 +141,18 @@ export default {
 
 <template>
   <div class="progress-container" ref="divSwitch">
-    <svg :width="strokeWidth" :height="size" >
-      <path class="bg" stroke="#ECE5E5" :stroke-width="strokeWidth" :d="dPath"></path>
-      <path ref="meters" class="meter" stroke="#F08080"
-        :stroke-width="strokeWidth"
+    <svg :height="strokeHeight" :width="size" >
+      <path class="bg" stroke="#F08080" :stroke-height="strokeHeight"
+        stroke-width="30" :d="dPath"></path>
+      <path ref="meters" class="meter" stroke="#ECE5E5" stroke-width="30"
+        :stroke-height="strokeHeight"
         :d="dPath"
         :style="metersStyle">
       </path>
     </svg>
+    <div :key="speed">
+      {{ speed }} km/h
+    </div>
   </div>
 </template>
 

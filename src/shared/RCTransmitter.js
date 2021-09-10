@@ -2,16 +2,15 @@
 import GamepadUtil from './GamepadUtil';
 import Axe from './Axe';
 import Auxiliary from './Auxiliary';
+import AbstractObservable from './AbstractObservable';
 
 /**
  * Class representing the data of a radio control from a gamepad
  */
-export default class RCTransmitter {
+export default class RCTransmitter extends AbstractObservable {
   #gamepadId = null;
 
   #gamepadUtil = null;
-
-  #observers = [];
 
   #throttle = new Axe('Throttle', 0, true);
 
@@ -28,6 +27,7 @@ export default class RCTransmitter {
    * @param {string} gamepadId id of gamepad
    */
   constructor(gamepadId) {
+    super();
     this.#gamepadId = gamepadId;
     this.#gamepadUtil = new GamepadUtil(this);
     this.auxiliariesCount = 8;
@@ -133,13 +133,6 @@ export default class RCTransmitter {
   }
 
   /**
-   * @returns {Array} all observers
-   */
-  get observers() {
-    return this.#observers;
-  }
-
-  /**
    * @param {number} value value to be rounded
    * @param {number} places number of decimals
    * @returns {number} value rounded
@@ -222,48 +215,5 @@ export default class RCTransmitter {
     }
 
     return 0;
-  }
-
-  /**
-   * Add an observer to this
-   * @param {Object} observer observer to add
-   */
-  addObserver(observer) {
-    if (!this.#observers.includes(observer)) {
-      this.#observers.push(observer);
-    }
-  }
-
-  /**
-   * Remove an observer from this.
-   * @param {object} observer observer to remove
-   */
-  removeObserver(observer) {
-    const removeIndex = this.#observers.findIndex((obs) => observer === obs);
-
-    if (removeIndex !== -1) {
-      this.#observers.splice(removeIndex, 1);
-    }
-  }
-
-  /**
-   * Remove all observers
-   */
-  removeAllObservers() {
-    this.#observers = [];
-  }
-
-  /**
-   * Loops over this.observers and calls the update method on each observer.
-   * The state object will call this method everytime it is updated.
-   */
-  notify() {
-    if (this.#observers.length > 0) {
-      this.#observers.forEach((observer) => {
-        if (typeof observer === 'function') {
-          observer();
-        }
-      });
-    }
   }
 }

@@ -31,19 +31,11 @@ export default class AbstractProtocol {
 
   #message = '';
 
-  #coordinates = [0, 0];
-
-  #speed = 10;
-
-  #altitude = 750;
-
-  #numSatFix = 128 + 12;
-
-  #groundCourse = 10;
-
   // #device = null;
 
   #streamsToWrite = [];
+
+  #gps = null;
 
   /**
    * @returns {Map} a map of axes values
@@ -112,61 +104,12 @@ export default class AbstractProtocol {
     this.#message = message;
   }
 
-  /**
-   * @returns {Array} coordinate ([latitude, longitude])
-   */
-  get coordinates() {
-    return this.#coordinates;
+  get gps() {
+    return this.#gps;
   }
 
-  /**
-   * Set the current coordinates
-   * @param {Array} coordinates current coordinates
-   */
-  set coordinates(coordinates) {
-    this.#coordinates = coordinates;
-  }
-
-  /**
-   * @returns {number} speed in Km/H
-   */
-  get speed() {
-    return this.#speed;
-  }
-
-  /**
-   * Set the speed
-   * @param {number} speed speed in Km/h
-   */
-  set speed(speed) {
-    this.#speed = speed;
-  }
-
-  /**
-   * @returns {number} altitude in meter
-   */
-  get altitude() {
-    return this.#altitude;
-  }
-
-  set altitude(altitude) {
-    this.#altitude = altitude;
-  }
-
-  get numSatFix() {
-    return this.#numSatFix;
-  }
-
-  set numSatFix(numSatFix) {
-    this.#numSatFix = numSatFix;
-  }
-
-  get groundCourse() {
-    return this.#groundCourse;
-  }
-
-  set groundCourse(groundCourse) {
-    this.#groundCourse = groundCourse;
+  set gps(gps) {
+    this.#gps = gps;
   }
   /**
   get device() {

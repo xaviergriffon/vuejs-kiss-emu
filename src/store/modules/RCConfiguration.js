@@ -1,3 +1,4 @@
+import GPS from '../../shared/GPS';
 import RCTransmitter from '../../shared/RCTransmitter';
 import Kiss from '../../protocols/Kiss';
 
@@ -9,7 +10,8 @@ export default {
   state: {
     rcTransmiter: null,
     gamepadId: null,
-    protocol: new Kiss(),
+    protocol: null,
+    gps: null,
     observers: [],
   },
   mutations: {
@@ -44,8 +46,28 @@ export default {
       return rcTransmiter;
     },
     protocol(state) {
-      const { protocol } = state;
+      let { protocol, gps } = state;
+      if (protocol == null) {
+        console.log('build kiss');
+        protocol = new Kiss();
+        if (gps == null) {
+          console.log('build gps');
+          gps = new GPS();
+          state.gps = gps;
+        }
+        protocol.gps = gps;
+        state.protocol = protocol;
+      }
       return protocol;
+    },
+    gps(state) {
+      let { gps } = state;
+      if (gps == null) {
+        console.log('build gps');
+        gps = new GPS();
+        state.gps = gps;
+      }
+      return gps;
     },
   },
   actions: {
@@ -58,7 +80,7 @@ export default {
       commit('changeGamepad', gamepadId);
     },
     /**
-     * Add an observer of  changes to the RCTransmitter.
+     * Add an observer of changes to the RCTransmitter.
      * @param {context} context context
      * @param {Object} observer observer of  changes to the RCTransmitter
      */
